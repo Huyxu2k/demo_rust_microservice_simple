@@ -6,11 +6,17 @@ extern crate futures;
 extern crate log;
 extern crate env_logger;
 
+use tokio;
+use std::convert::Infallible;
+use std::net::{SocketAddr, IpAddr, Ipv4Addr};
 use std::pin::Pin;
 
 use hyper::{Request,Response,StatusCode,Body,Error};
 use hyper::server::Server;
 use hyper::service::{Service, make_service_fn,service_fn};
+use hyper::server::conn::AddrStream;
+
+
 
 use futures::future::Future;
 
@@ -50,11 +56,26 @@ impl  Service<Request<Vec<u8>>> for Microservice {
     }
 }
 
-fn main() {
-    println!("Hello, world!");
+
+#[tokio::main]
+async fn main(){
+    //println!("Hello, world!");
     env_logger::init();
-    let address="127.0.0.1:8000".parse().unwrap_or_default();
-    let server=Server::bind(address);
-                info!("Running micreservice at {}",address);
-        
+   
+    let address=SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080);
+    info!("Running micreservice at {}",address);
+    let make_svc = make_service_fn(|socket: &AddrStream| {
+             let remote_addr = socket.remote_addr();
+             async move {
+                Ok::<_, Infallible>(service_fn(move |_: Request<Body>| async move {
+                     Ok::<_, Infallible>(
+                         Response::new(Body::from(format!("Hello, {}!", remote_addr)))
+                     )
+                 }))
+             }
+         });
+     let server=Server::bind(&address).serve(make_svc);  
+    if let Err(e) = server.await {
+                 eprintln!("server error: {}", e);
+             }
 }
