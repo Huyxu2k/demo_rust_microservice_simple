@@ -15,7 +15,7 @@ use std::env;
 use std::result::Result;
 use hyper::server::Server;
 use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Request, Response, StatusCode, Method};
+use hyper::{Body, Request, Response, StatusCode, Method, body};
 
 use futures::future::Future;
 use mysql_async::prelude::*;
@@ -80,6 +80,15 @@ struct  Book {
     note: String,
     category:String
 }
+// TODO: 31-03-2023
+#[derive(Deserialize,Serialize,Debug)]
+struct  BookDTO{
+    book_name: String,
+    amount :i32,
+    author: String,
+    note: String,
+    category:String
+}
 impl  Book {
     fn new(id: i32,book_name:String,amount: i32,author:String,note:String,category:String,)->Self{
         Self {
@@ -125,8 +134,8 @@ async fn handle_request(req:Request<Body>,pool:Pool)->Result<Response<Body>,anyh
         (&Method::POST, "/create_book") => {
             let mut conn = pool.get_conn().await.unwrap();
 
-            let byte_stream = hyper::body::to_bytes(req).await?;
-            let book: Book = serde_json::from_slice(&byte_stream).unwrap();
+            let byte_stream =hyper::body::to_bytes(req).await?;
+            let book: BookDTO = serde_json::from_slice(&byte_stream).unwrap();
 
             "INSERT INTO book (book_name, amount,author, note, category) VALUES (:book_name, :amount, :author, :note,:category)"
                 .with(params! {
@@ -142,7 +151,6 @@ async fn handle_request(req:Request<Body>,pool:Pool)->Result<Response<Body>,anyh
             drop(conn);
             Ok(response_build("{\"status\":true}"))
         }
-
         // (&Method::POST, "/create_books") => {
         //     let mut conn = pool.get_conn().await.unwrap();
 
@@ -169,8 +177,8 @@ async fn handle_request(req:Request<Body>,pool:Pool)->Result<Response<Body>,anyh
         (&Method::POST, "/update_book") => {
             let mut conn = pool.get_conn().await.unwrap();
 
-            let byte_stream = hyper::body::to_bytes(req).await?;
-            let book: Book = serde_json::from_slice(&byte_stream).unwrap();
+            let byte_stream =hyper::body::to_bytes(req).await?;
+            let book: Book = serde_json::from_reader(&*byte_stream).unwrap(); //from_slice(&byte_stream).unwrap();
 
             "UPDATE book SET  book_name=:book_name, amount=:amount, author=:author, note=:note, category=:category WHERE id=:id"
                 .with(params! {
