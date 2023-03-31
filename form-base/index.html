@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <h1>
+    <title>BOOK</title>
+  </h1>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous" />
+  <style>
+    .d-none {
+      display: none;
+    }
+  </style>
+</head>
+
+<body class="mb-5">
+  <div class="container mt-5">
+    <div id="app-loading-display">
+      <h1>Loading....</h1>
+    </div>
+    <div id="book-display" class="d-none">
+      <div id="book-empty-text" class="d-none">
+        <em>Chưa có dữ liệu để hiển thị !!!!</em>
+      </div>
+
+      <table id="book-table" border="1" class="d-none table table-striped">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>BOOK NAME</th>
+            <th>AUTHOR</th>
+            <th>AMOUNT</th>
+            <th>CAGETORY</th>
+            <th>NOTE</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <hr>
+      <div id="add-book-wrapper" class="d-none row">
+        <div class="col-6">
+          <div class="accordion" id="accordionExample">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="addBookHeading">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#addBook" aria-controls="addBook">
+                  Add an Book
+                </button>
+              </h2>
+              
+              <!-- Form Add Book -->
+              <div id="addBook" class="accordion-collapse collapse p-3" aria-labelledby="addBookHeading"
+                data-bs-parent="#accordionExample">
+                <form id="add-book-form">
+                  <!-- <div class="mb-3">
+                      <label for="id" class="form-label">ID</label>
+                      <input type="number" required class="form-control" id="id" aria-describedby="idHelp">
+                      <div id="idHelp" class="form-text">The ID Of The Book</div>
+                    </div> -->
+                  <div class="mb-3">
+                    <label for="book-name" class="form-label">BOOK NAME</label>
+                    <input type="text" required class="form-control" id="book-name" aria-describedby="booknameHelp" value="">
+                    <div id="booknameIdHelp" class="form-text">Tên của cuốn sách</div>
+                  </div>
+                  <div class="mb-3">
+                    <label for="author" class="form-label">AUTHOR</label>
+                    <input type="text" required class="form-control" id="author" aria-describedby="authorHelp" value="">
+                    <div id="authorHelp" class="form-text">Tác giả của cuốn sách</div>
+                  </div>
+                  <div class="mb-3">
+                    <label for="amount" class="form-label">AMOUNT</label>
+                    <input type="number" required class="form-control" id="amount" aria-describedby="amountHelp" value="">
+                    <div id="amountHelp" class="form-text">Số lượng </div>
+                  </div>
+                  <div class="mb-3">
+                    <label for="cagetory" class="form-label">CAGETORY</label>
+                    <input type="text" required class="form-control" id="cagetory" aria-describedby="cagetoryHelp" value=""> 
+                    <div id="cagetoryHelp" class="form-text">Thể loại của cuốn sách</div>
+                  </div>
+                  <div class="mb-3">
+                    <label for="note" class="form-label">NOTE</label>
+                    <input type="text" required class="form-control" id="note" aria-describedby="noteHelp" value="">
+                    <div id="noteHelp" class="form-text">Ghi chú</div>
+                  </div>
+                  <input type="submit" class="btn btn-success" value="Add Book" />
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3"
+    crossorigin="anonymous"></script>
+  <!-- <script type="javascript" src="\\js\index.js"></script> -->
+  <script>
+    (
+      function () {
+        let book = null;
+
+        //CONST
+        const appLoadingDisplay = document.getElementById("app-loading-display");
+        const bookDisplay = document.getElementById("book-display");
+        const bookTable = document.getElementById("book-table");
+        const bookEmptyText = document.getElementById("book-empty-text");
+        const bookTableTbody = document.querySelector("#book-table tbody");
+        const addBookWrapper = document.getElementById("add-book-wrapper");
+        const addBookForm = document.getElementById("add-book-form");
+        const id = document.getElementById("id");
+        const bookNameField = document.getElementById("book-name");
+        const authorField = document.getElementById("author");
+        const amountField = document.getElementById("amount");
+        const cagetoryField = document.getElementById("cagetory");
+        const noteField = document.getElementById("note");
+
+        //Load List Book From 
+        function fetchBooks() {
+          fetch("http://localhost:8080/books")
+            .then(r => r.json())
+            .then(r => books = r)
+            .then(renderBooks)
+            .catch((e) => {
+              init();
+            });
+        }
+
+        //Render Row In Table
+        function renderBooks() {
+          appLoadingDisplay.classList.add("d-none");
+          bookDisplay.classList.remove("d-none");
+          addBookWrapper.classList.remove("d-none");
+
+          if (books.length === 0) {
+            bookEmptyText.classList.remove("d-none");
+            bookTable.classList.add("d-none");
+            return;
+          }
+          bookEmptyText.classList.add("d-none");
+          bookTable.classList.remove("d-none");
+
+          while (bookTableTbody.firstChild) {
+            bookTableTbody.removeChild(bookTableTbody.firstChild);
+          }
+
+          books.forEach((book) => {
+            const id = book.id;
+            const row = document.createElement("tr");
+            row.appendChild(createCell(book.id));
+            row.appendChild(createCell(book.book_name));
+            row.appendChild(createCell(book.author));
+            row.appendChild(createCell(book.amount));
+            row.appendChild(createCell(book.category));
+            row.appendChild(createCell(book.note));
+            const actionCell = document.createElement("td");
+
+            //Delete Button
+            const deleteButton = document.createElement("button");
+            deleteButton.classList.add(...["btn", "btn-sm", "btn-danger"]);
+            deleteButton.innerText = "Delete";
+
+            deleteButton.addEventListener("click", (e) => {
+              e.preventDefault();
+              deleteBook(id);
+            });
+            actionCell.appendChild(deleteButton);
+
+            //Update Button
+            const updateButton=document.createElement("button");
+            updateButton.classList.add(...["btn", "btn-sm", "btn-success"]);
+            updateButton.innerText = "Update";
+            updateButton.addEventListener("click", (e) => {
+              e.preventDefault();
+              updateButton(book);
+            });
+            actionCell.appendChild(updateButton);
+
+            row.appendChild(actionCell);
+            bookTableTbody.appendChild(row);
+          });
+        }
+
+        //Update Book 
+        function updateButton(book){
+          // bookNameField.value =book.book_name;
+          // authorField.value =book.author;
+          // amountField.value = book.amount;
+          // cagetoryField.value = book.category;
+          // noteField.value = book.note;
+        }
+
+        //Delete Book By ID
+        function deleteBook(id) {
+          let s = confirm("Bạn có chắc muốn xóa bản ghi này không?");
+          if (s) {
+            fetch(`http://localhost:8080/delete_book?id=${id}`)
+              .then(() => fetchBooks());
+          }
+        }
+
+        //Create Cell
+        function createCell(contents) {
+          const cell = document.createElement("td");
+          cell.innerText = contents;
+          return cell;
+        }
+
+        //Show Error
+        function displayError(err) {
+          alert("Error:" + err);
+        }
+
+        //ADD Book After On Submit
+        function onAddFormSubmit(e) {
+          e.preventDefault();
+          let s = confirm("Bạn có chắc muốn thêm mới bản ghi này không ?");
+          if (s) {
+            const data = {
+              book_name: bookNameField.value,
+              author: authorField.value,
+              amount: parseInt(amountField.value),
+              category: cagetoryField.value,
+              note: noteField.value,
+            };
+
+            fetch("http://localhost:8080/create_book", {
+              method: "POST",
+              body: JSON.stringify(data),
+              headers: { "Content-type": "application/json" },
+            }).then(() => fetchBooks())
+              .then(() => resetAddBookForm());
+          }
+        }
+
+        // Reset Form
+        function resetAddBookForm() {
+          bookNameField.value = "";
+          authorField.value = "";
+          amountField.value = "";
+          cagetoryField.value = "";
+          noteField.value = "";
+        }
+        fetchBooks();
+        addBookForm.addEventListener("submit", onAddFormSubmit);
+      }
+    )();
+  </script>
+</body>
+
+</html>
